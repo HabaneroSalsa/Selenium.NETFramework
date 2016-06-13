@@ -18,8 +18,12 @@ namespace OnlineStore.TestCases
     {   
         
         static System.Collections.Specialized.NameValueCollection appSettings = ConfigurationManager.AppSettings;
+        // Static log filename
         string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
-            appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
+            appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + ".log");
+        // Dynamic log filename
+        //string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
+        //    appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
         string LogFolder = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"])+"\\";
 
         // Logging definition start
@@ -63,16 +67,16 @@ namespace OnlineStore.TestCases
         [Test]
         public void AddItemsToCart()
         {
-            // Report engine setup
+        // Report engine setup
             string HTMLLogFile = LogFile  + ".html";
-            var extent = new ExtentReports(HTMLLogFile, DisplayOrder.OldestFirst);
+            var extent = new ExtentReports(HTMLLogFile, false, DisplayOrder.OldestFirst);
             extent.AddSystemInfo("Selenium Version", "2.53.0");
             extent.AddSystemInfo("NUnit Version", "3.2.0");
             extent.AddSystemInfo("Dapper Version", "1.4.2");
             extent.AddSystemInfo("Environment", "Local");
             extent.AddSystemInfo("Browser", "Chrome");
 
-            var testSuite = extent.StartTest("Shopping Cart Test Suite " + string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now), "<b>Suite Objective:</b><br/>Log into the system with credentials pulled from Excel.<br/>Add 5 items to the shopping cart where the item names, URLs and locators are pulled from Excel.<br/>Validate pageloads and interactions.");
+            var testSuite = extent.StartTest("Shopping Cart Test Suite", "<b>"  + string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now) + "Suite Objective:</b><br/>Log into the system with credentials pulled from Excel.<br/>Add 5 items to the shopping cart where the item names, URLs and locators are pulled from Excel.<br/>Validate pageloads and interactions.");
             string currentURL = "";
 
             testSuite.AssignCategory("Functional", "Regression", "Training");
@@ -93,13 +97,13 @@ namespace OnlineStore.TestCases
                 currentURL = driver.Url;
                 if (ConfigurationManager.AppSettings["URL"] == currentURL)
                 {
-                    caseLoadHomePage.Log(LogStatus.Pass, " Expected URL: " + ConfigurationManager.AppSettings["URL"] + " <br /> Actual URL: " + currentURL);
+                    caseLoadHomePage.Log(LogStatus.Pass, "ASSERT: Expected URL: " + ConfigurationManager.AppSettings["URL"] + " <br /> Actual URL: " + currentURL);
                 }
                 else
                 {
-                    caseLoadHomePage.Log(LogStatus.Fail, " Expected URL: " + ConfigurationManager.AppSettings["URL"] + " <br /> Actual URL: " + currentURL);
+                    caseLoadHomePage.Log(LogStatus.Fail, "ASSERT: Expected URL: " + ConfigurationManager.AppSettings["URL"] + " <br /> Actual URL: " + currentURL);
                 }
-
+                Assert.AreEqual(ConfigurationManager.AppSettings["URL"], currentURL);
             // Validate page load : caseLoadHomePage END
 
 
@@ -144,7 +148,7 @@ namespace OnlineStore.TestCases
             }
             LogQAData("Current URL = {0}",driver.Url);
          
-            //Wait for login to complete
+            //Wait for post-login screen refresh to complete
             do
                 {
                     currentURL = driver.Url;
@@ -171,36 +175,39 @@ namespace OnlineStore.TestCases
                     LogQAData("Record {0} of {1}: \n ItemName: {2}\n URL: {3} \n Locator: {4}",
                         i, shoppingData.Count-1, shoppingData[i].ItemName, shoppingData[i].ItemURL, shoppingData[i].ItemAddToCartLocator);
                     driver.Navigate().GoToUrl(shoppingData[i].ItemURL);
+                    // Navigate and validate
                     currentURL = driver.Url;
                     if (shoppingData[i].ItemURL == currentURL)
                     {
-                        caseShoppingCart.Log(LogStatus.Pass, " Expected URL: " + shoppingData[i].ItemURL + " <br /> Actual URL: " + currentURL);
+                        caseShoppingCart.Log(LogStatus.Pass, "ASSERT:<br/ >Expected URL: " + shoppingData[i].ItemURL + " <br /> Actual URL: " + currentURL);
                     }
                     else
                     {
-                        caseShoppingCart.Log(LogStatus.Fail, " Expected URL: " + shoppingData[i].ItemURL + " <br /> Actual URL: " + currentURL);
+                        caseShoppingCart.Log(LogStatus.Fail, "ASSERT:<br/ >Expected URL: " + shoppingData[i].ItemURL + " <br /> Actual URL: " + currentURL);
                     }
 
                     LogQAData("Asserting ItemURL = currentURL <br/> Expected: {0} <br/> Actual: {1}", shoppingData[i].ItemURL, currentURL);
                     Assert.AreEqual(shoppingData[i].ItemURL, currentURL);
-                    driver.FindElement(By.XPath(shoppingData[i].ItemAddToCartLocator)).Click();
 
+                    // Report on item addition success
+                    driver.FindElement(By.XPath(shoppingData[i].ItemAddToCartLocator)).Click();
+                    caseShoppingCart.Log(LogStatus.Pass, "Added " + shoppingData[i].ItemName + " to shopping cart by clicking the element with XPath: " + shoppingData[i].ItemAddToCartLocator);
+                    LogQAData("Added {0} to shopping cart.", shoppingData[i].ItemName);
+                    // Capture, store, add report data for screen shot after adding the current item to the cart
                     string sslogfile = LogFolder + string.Format("{0:yyyyMMddHHmmss}.png", DateTime.Now);
                     Thread.Sleep(1200);
                     ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile(sslogfile, ImageFormat.Png);
                     caseShoppingCart.Log(LogStatus.Info, "Add item to cart screenshot:" + testSuite.AddScreenCapture(sslogfile));
-                    caseShoppingCart.Log(LogStatus.Pass, "Added " + shoppingData[i].ItemName + " to shopping cart by clicking the element with XPath: " + shoppingData[i].ItemAddToCartLocator);
-                    LogQAData("Added {0} to shopping cart.", shoppingData[i].ItemName);
+                   
 
                     testSuite.AppendChild(caseShoppingCart);
                 }
-
             // Validate shopping cart population : caseShoppingCart END
 
 
             // Validate math calculations in shopping cart : caseValidateMath START
             var caseValidateMath = extent.StartTest("Validate math");
-            caseValidateMath.Log(LogStatus.Fail, "Field calulation validations");
+            caseValidateMath.Log(LogStatus.Info, "Field calulation validations");
 
             driver.Navigate().GoToUrl("http://store.demoqa.com/products-page/checkout/");
             driver.FindElement(By.XPath(".//*[@id='header_cart']/a/span[1]")).Click();
@@ -224,30 +231,152 @@ namespace OnlineStore.TestCases
             //                  line 4 total XPath .//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[5]/span/span
             //                  line 5 total XPath .//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[5]/span/span
 
-
+            // Validate item cart total matches sum of item quantities
             int totalItems = Int32.Parse(driver.FindElement(By.XPath(".//*[@id='header_cart']/a/em[1]")).Text);
-            int calculatedItemTotal = Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[3]/form/input[1]")).Text) +
-                   Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[3]/form/input[1]")).Text)+
-                   Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[3]/form/input[1]")).Text)+
-                   Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[3]/form/input[1]")).Text)+
-                   Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")).Text);
-            //decimal subTotal = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/span/span")).Text), NumberStyles.Currency);
-            //decimal calculatedSubTotal = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[5]/span")).Text), NumberStyles.Currency);// +
-                       //decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[5]/span")).Text), NumberStyles.Currency) +
-                       //decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[5]/span")).Text), NumberStyles.Currency) +
-                       //decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[5]/span")).Text), NumberStyles.Currency) +
-                       //decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[5]/span")).Text), NumberStyles.Currency);
-            string calculatedSubTotal = (driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[5]/span")).Text);
             caseValidateMath.Log(LogStatus.Info, "totalItems is " + totalItems);
-            //caseValidateMath.Log(LogStatus.Info, "subTotal is " + subTotal);
+            int calculatedItemTotal =
+                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[3]/form/input[1]")).GetAttribute("value")) +
+                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[3]/form/input[1]")).GetAttribute("value")) +
+                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[3]/form/input[1]")).GetAttribute("value")) +
+                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[3]/form/input[1]")).GetAttribute("value")) +
+                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")).GetAttribute("value"));
             caseValidateMath.Log(LogStatus.Info, "calculatedItemTotal is " + calculatedItemTotal);
-            //caseValidateMath.Log(LogStatus.Info, "calculatedSubTotal is " + calculatedSubTotal);
-
+            // Assert and log item counts: calculated = displayed
+            if (totalItems == calculatedItemTotal)
+            {
+                caseValidateMath.Log(LogStatus.Pass, "ASSERT:<br/>Expected total item quantity in shopping cart (" + totalItems + ") = calculated item quantity (" + calculatedItemTotal + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail, "ASSERT:<br/>Expected total item quantity in shopping cart (" + totalItems + ") = calculated item quantity (" + calculatedItemTotal + ")");
+            }
+            Assert.AreEqual(totalItems, calculatedItemTotal);
+            // Validate SubTotal matches sum of line item totals
+            decimal subTotal = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "subTotal is " + subTotal);
+            decimal calculatedSubTotal = 
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[5]/span/span")).Text), NumberStyles.Currency) +
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[5]/span/span")).Text), NumberStyles.Currency) +
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[5]/span/span")).Text), NumberStyles.Currency) +
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[5]/span/span")).Text), NumberStyles.Currency) +
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedSubTotal is " + calculatedSubTotal);
+            // Assert and log subtotals: calculated = displayed
+            if (subTotal == calculatedSubTotal)
+            {
+                caseValidateMath.Log(LogStatus.Pass, "ASSERT:<br/>Expected total item quantity in shopping cart (" + subTotal + ") = calculated item quantity (" + calculatedSubTotal + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail, "ASSERT:<br/>Expected total item quantity in shopping cart (" + subTotal + ") = calculated item quantity (" + calculatedSubTotal + ")");
+            }
+            Assert.AreEqual(subTotal, calculatedSubTotal);
+            // Validate line items Quantity x Price match line item totals
+              // Line 1
+            decimal calculatedLinePrice =
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[4]/span")).Text), NumberStyles.Currency) *
+                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[3]/form/input[1]")).GetAttribute("value"));
+            decimal displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[4]/span")).Text), NumberStyles.Currency) +
+                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[3]/form/input[1]")).GetAttribute("value")) +
+                " is " + calculatedLinePrice);
+              // Assert Line 1
+            if (displayedLinePrice == calculatedLinePrice)
+            {
+                caseValidateMath.Log(LogStatus.Pass,
+                    "ASSERT:<br/>Expected line item total for Line 1 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail,
+                    "ASSERT:<br/>Expected line item total for Line 1 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
+            // Line 2
+            calculatedLinePrice =
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[4]/span")).Text), NumberStyles.Currency) *
+                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[3]/form/input[1]")).GetAttribute("value"));
+            displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[4]/span")).Text), NumberStyles.Currency) +
+                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[3]/form/input[1]")).GetAttribute("value")) +
+                " is " + calculatedLinePrice);
+            // Assert Line 2
+            if (displayedLinePrice == calculatedLinePrice)
+            {
+                caseValidateMath.Log(LogStatus.Pass,
+                    "ASSERT:<br/>Expected line item total for Line 2 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail,
+                    "ASSERT:<br/>Expected line item total for Line 2 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
+            // Line 3
+            calculatedLinePrice =
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[4]/span")).Text), NumberStyles.Currency) *
+                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[3]/form/input[1]")).GetAttribute("value"));
+            displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[4]/span")).Text), NumberStyles.Currency) +
+                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[3]/form/input[1]")).GetAttribute("value")) +
+                " is " + calculatedLinePrice);
+            // Assert Line 3
+            if (displayedLinePrice == calculatedLinePrice)
+            {
+                caseValidateMath.Log(LogStatus.Pass,
+                    "ASSERT:<br/>Expected line item total for Line 3 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail,
+                    "ASSERT:<br/>Expected line item total for Line 3 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
+            // Line 4
+            calculatedLinePrice =
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[4]/span")).Text), NumberStyles.Currency) *
+                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[3]/form/input[1]")).GetAttribute("value"));
+            displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[4]/span")).Text), NumberStyles.Currency) +
+                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[3]/form/input[1]")).GetAttribute("value")) +
+                " is " + calculatedLinePrice);
+            // Assert Line 4
+            if (displayedLinePrice == calculatedLinePrice)
+            {
+                caseValidateMath.Log(LogStatus.Pass,
+                    "ASSERT:<br/>Expected line item total for Line 4 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail,
+                    "ASSERT:<br/>Expected line item total for Line 4 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            // Line 5
+            calculatedLinePrice =
+                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[4]/span")).Text), NumberStyles.Currency) *
+                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")).GetAttribute("value"));
+            displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[5]/span/span")).Text), NumberStyles.Currency);
+            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[4]/span")).Text), NumberStyles.Currency) +
+                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")).GetAttribute("value")) +
+                " is " + calculatedLinePrice);
+            // Assert Line 5
+            if (displayedLinePrice == calculatedLinePrice)
+            {
+                caseValidateMath.Log(LogStatus.Pass,
+                    "ASSERT:<br/>Expected line item total for Line 5 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            else
+            {
+                caseValidateMath.Log(LogStatus.Fail,
+                    "ASSERT:<br/>Expected line item total for Line 5 displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")");
+            }
+            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
+            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
             // Validate math calculations in shopping cart : caseValidateMath END
 
 
             // Validate test closure : testClosure START
-            var testClosure = extent.StartTest("Test Closure");
+            var testClosure = extent.StartTest("Ending Validation");
             string sslogfileEnd = LogFolder + string.Format("{0:yyyyMMddHHmmss}.png", DateTime.Now);
             ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile(sslogfileEnd, ImageFormat.Png);
             testClosure.Log(LogStatus.Skip, "Add item to cart screenshot:" + testSuite.AddScreenCapture(sslogfileEnd));
