@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="OnlineStore.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="URL" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://www.store.demoqa.com</Value>
+    </Setting>
+    <Setting Name="FolderPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">C:\Users\rick.johnson\Test\</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

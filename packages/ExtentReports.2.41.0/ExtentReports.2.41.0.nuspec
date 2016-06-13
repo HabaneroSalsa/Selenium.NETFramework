@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>ExtentReports</id>
+    <version>2.41.0</version>
+    <title>ExtentReports</title>
+    <authors>Anshoo Arora</authors>
+    <owners>Anshoo Arora</owners>
+    <licenseUrl>http://extentreports.relevantcodes.com/</licenseUrl>
+    <projectUrl>http://extentreports.relevantcodes.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An open-source reporting library for Java and .NET</description>
+    <summary>An open-source reporting library for Java and .NET</summary>
+    <releaseNotes>fix - #433 - Support for Chinese characters</releaseNotes>
+    <copyright>Anshoo Arora (RelevantCodes.com) Copyright 2016</copyright>
+    <tags>Extent ExtentReports Reporting RelevantCodes</tags>
+  </metadata>
+</package>
