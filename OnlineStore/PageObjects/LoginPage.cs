@@ -44,8 +44,95 @@ namespace OnlineStore.PageObjects
         [CacheLookup]
         private IWebElement ProductCategoryMenu { get; set; }
 
+        [FindsBy(How = How.LinkText, Using = "Register")]
+        [CacheLookup]
+        private IWebElement RegisterLink { get; set; }
 
+        [FindsBy(How = How.LinkText, Using = "Log in")]
+        [CacheLookup]
+        private IWebElement LoginLink { get; set; }
 
+        [FindsBy(How = How.CssSelector, Using = ".footer_blog>p")]
+        [CacheLookup]
+        private IWebElement FooterBar { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[1]/a[1]")]
+        [CacheLookup]
+        private IWebElement Featured1TextLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[1]/a[2]")]
+        [CacheLookup]
+        private IWebElement Featured1ImgLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[1]/a[3]")]
+        [CacheLookup]
+        private IWebElement Featured1MoreLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[2]/a[1]")]
+        [CacheLookup]
+        private IWebElement Featured2TextLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[2]/a[2]")]
+        [CacheLookup]
+        private IWebElement Featured2ImgLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[2]/a[3]")]
+        [CacheLookup]
+        private IWebElement Featured2MoreLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[3]/a[1]")]
+        [CacheLookup]
+        private IWebElement Featured3TextLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[3]/a[2]")]
+        [CacheLookup]
+        private IWebElement Featured3ImgLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[3]/a[3]")]
+        [CacheLookup]
+        private IWebElement Featured3MoreLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[4]/a[1]")]
+        [CacheLookup]
+        private IWebElement Featured4TextLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[4]/a[2]")]
+        [CacheLookup]
+        private IWebElement Featured4ImgLink { get; set; }
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='footer']/section[2]/ul/li[4]/a[3]")]
+        [CacheLookup]
+        private IWebElement Featured4MoreLink { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = ".pinterest>a")]
+        [CacheLookup]
+        private IWebElement PinterestFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = ".gplus>a")]
+        [CacheLookup]
+        private IWebElement GPlusFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = ".rss>a")]
+        [CacheLookup]
+        private IWebElement RSSFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = "#footer_nav>p")]
+        [CacheLookup]
+        private IWebElement CopyrightFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = "#menu-item-53>a")]
+        [CacheLookup]
+        private IWebElement SPHomeFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = "#menu-item-54>a")]
+        [CacheLookup]
+        private IWebElement SamplePageFooter { get; set; }
+
+        [FindsBy(How = How.CssSelector, Using = "#menu-item-55>a")]
+        [CacheLookup]
+        private IWebElement YourAccountFooter { get; set; }
+        
+        
 
         public LoginPage(IWebDriver driver)
         {
