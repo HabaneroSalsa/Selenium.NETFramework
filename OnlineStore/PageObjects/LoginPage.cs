@@ -20,6 +20,33 @@ namespace OnlineStore.PageObjects
         [CacheLookup]
         private IWebElement Submit { get; set; }
 
+        [FindsBy(How = How.Id, Using = "rememberme")]
+        [CacheLookup]
+        private IWebElement RememberMeCheckbox { get; set; }
+
+        [FindsBy(How = How.Id, Using = "logo")]
+        [CacheLookup]
+        private IWebElement SiteLogo { get; set; }
+
+        [FindsBy(How = How.Id, Using = "header_cart")]
+        [CacheLookup]
+        private IWebElement Cart { get; set; }
+
+        [FindsBy(How = How.Id, Using = "account")]
+        [CacheLookup]
+        private IWebElement MyAccount { get; set; }
+
+        [FindsBy(How = How.Id, Using = "menu-item-15")]
+        [CacheLookup]
+        private IWebElement HomeMenu { get; set; }
+        
+        [FindsBy(How = How.Id, Using = "menu-item-33")]
+        [CacheLookup]
+        private IWebElement ProductCategoryMenu { get; set; }
+
+
+
+
         public LoginPage(IWebDriver driver)
         {
             this.driver = driver;

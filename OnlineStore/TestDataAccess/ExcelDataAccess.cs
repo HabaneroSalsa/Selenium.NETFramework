@@ -22,7 +22,7 @@ namespace OnlineStore.TestDataAccess
             using (var connection = new OleDbConnection(TestDataFileConnection()))
             {
                 connection.Open();
-                var query = string.Format("select * from [DataSet$] where key='{0}'", keyName);
+                var query = string.Format("select * from [Credentials$] where key='{0}'", keyName);
                 var value = connection.Query<UserData>(query).FirstOrDefault();
                 connection.Close();
                 return value;
@@ -36,7 +36,6 @@ namespace OnlineStore.TestDataAccess
                 connection.Open();
                 var query = string.Format("select * from [ShoppingItems$]");
                 var value = connection.Query<ShoppingData>(query).ToList();
-
                 connection.Close();
                 return value;
             }
