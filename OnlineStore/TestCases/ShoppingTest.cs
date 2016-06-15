@@ -77,7 +77,9 @@ namespace OnlineStore.TestCases
             extent.AddSystemInfo("Environment", "Local");
             extent.AddSystemInfo("Browser", "Chrome");
 
-            var testSuite = extent.StartTest("Shopping Cart Test Suite", "<b>"  + string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now) + "Suite Objective:</b><br/>Log into the system with credentials pulled from Excel.<br/>Add 5 items to the shopping cart where the item names, URLs and locators are pulled from Excel.<br/>Validate pageloads and interactions.");
+            var testSuite = extent.StartTest("Shopping Cart Test Suite", "<b>"  + string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now) +
+                "Suite Objective:</b><br/>Log into the system with credentials pulled from Excel.<br/>Add 5 items to the shopping cart where the item names, " +
+                "URLs and locators are pulled from Excel.<br/>Validate pageloads and interactions.");
             string currentURL = "";
 
             testSuite.AssignCategory("Functional", "Regression", "Training");
@@ -88,7 +90,7 @@ namespace OnlineStore.TestCases
 
             IWebDriver driver = new ChromeDriver();// FirefoxDriver();
             driver.Url = driver.Url = ConfigurationManager.AppSettings["URL"];
-            
+
             // Validate page load : caseLoadHomePage START
             var homePage = new HomePage(driver);
             var caseLoadHomePage = extent.StartTest("Load Home Page");
@@ -114,7 +116,7 @@ namespace OnlineStore.TestCases
             loginPage.LoginToApplication("LoginTest");
             bool isGreetingDisplayed = false;
 
-            // Login has occurred, poll for Howdy, in .//*[@id='wp-admin-bar-my-account']/a
+            // Login has occurred, poll for Howdy, in .//*[@id='wp-admin-bar-my-account']/a from loginPage.GetAuthGreetDisplayedStatus()
             do
             {
                 LogQAData("Before display check {0}", isGreetingDisplayed);
@@ -122,7 +124,7 @@ namespace OnlineStore.TestCases
                 Thread.Sleep(500);
                 try
                 {
-                    isGreetingDisplayed = driver.FindElement(By.XPath(".//*[@id='wp-admin-bar-my-account']/a")).Displayed;
+                    isGreetingDisplayed = loginPage.GetAuthGreetDisplayedStatus();
                 }
                 catch
                 {
@@ -131,7 +133,9 @@ namespace OnlineStore.TestCases
                 }
             } while (!isGreetingDisplayed);
 
-            string authGreet = driver.FindElement(By.XPath(".//*[@id='wp-admin-bar-my-account']/a")).Text;
+            
+            string authGreet = loginPage.GetAuthGreetText();
+            
             
             if (authGreet.Contains("Howdy,"))
             {
@@ -159,6 +163,9 @@ namespace OnlineStore.TestCases
                 .AppendChild(caseSuccessAuth);
             // Authenticate successful : caseSuccessAuth END
 
+            loginPage.ClickAllProductMenu();
+            var allProductPage = new AllProductPage(driver);
+            allProductPage.ClickButtoniPhone5();
 
             // Validate shopping cart population : caseShoppingCart START
 
@@ -168,13 +175,15 @@ namespace OnlineStore.TestCases
             // Iterate through data, execute process and test for each item in the list of test data
             for (int i = 0; i < shoppingData.Count; i++)
             {                
+                // Create auto-enumerated Child Test Case Section for reporting
                 var caseShoppingCart = extent.StartTest("Add cart item #" + i);
+                // Create a report entry Info record with a snapshot of the data for the current iteration
                 caseShoppingCart.Log(LogStatus.Info, "Record " + i + " of " + (shoppingData.Count - 1) + ":<br/> ItemName: " + shoppingData[i].ItemName
-                    + "<br/> URL: " + shoppingData[i].ItemURL + "<br/> Locator: " + shoppingData[i].ItemAddToCartLocator);
-                LogQAData("Record {0} of {1}: \n ItemName: {2}\n URL: {3} \n Locator: {4}",
-                    i, shoppingData.Count-1, shoppingData[i].ItemName, shoppingData[i].ItemURL, shoppingData[i].ItemAddToCartLocator);
-                driver.Navigate().GoToUrl(shoppingData[i].ItemURL);
-                // Navigate and validate
+                    + "<br/> URL: " + shoppingData[i].ItemURL);
+                // Log the current record data snapshot to text logger 
+                LogQAData("Record {0} of {1}: \n ItemName: {2}\n URL: {3}", i, shoppingData.Count-1, shoppingData[i].ItemName, shoppingData[i].ItemURL);
+                // Navigate to the URL for this iteration and validate the URL change
+                driver.Navigate().GoToUrl(shoppingData[i].ItemURL);              
                 currentURL = driver.Url;
                 assertText = "ASSERT:<br/ >Expected URL: " + shoppingData[i].ItemURL + " <br /> Actual URL: " + currentURL;
                 if (shoppingData[i].ItemURL == currentURL)
@@ -184,22 +193,23 @@ namespace OnlineStore.TestCases
                 else
                 {
                     caseShoppingCart.Log(LogStatus.Fail, assertText);
-                }
-
-                LogQAData(assertText);
-                Assert.AreEqual(shoppingData[i].ItemURL, currentURL);
-
+                }                  
+                // Press the Add To Cart button
+                allProductPage.ClickAddToCart();
                 // Report on item addition success
-                driver.FindElement(By.XPath(shoppingData[i].ItemAddToCartLocator)).Click();
                 caseShoppingCart.Log(LogStatus.Pass, "Added " + shoppingData[i].ItemName + " to shopping cart by clicking the element with XPath: " + shoppingData[i].ItemAddToCartLocator);
                 LogQAData("Added {0} to shopping cart.", shoppingData[i].ItemName);
-                // Capture, store, add report data for screen shot after adding the current item to the cart
+                // Log to text log
+                LogQAData(assertText);
+                //Assert
+                Assert.AreEqual(shoppingData[i].ItemURL, currentURL);
+                // Capture and store screen shot after adding the current item to the cart, add a report entry
+                Thread.Sleep(1200); // Optional wait, allow time for item name to populate the popup
                 string sslogfile = LogFolder + string.Format("{0:yyyyMMddHHmmss}.png", DateTime.Now);
-                Thread.Sleep(1200);
                 ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile(sslogfile, ImageFormat.Png);
                 caseShoppingCart.Log(LogStatus.Info, "Add item to cart screenshot:" + testSuite.AddScreenCapture(sslogfile));
-                   
-
+                  
+                // Append the iteration as a child case for the report
                 testSuite.AppendChild(caseShoppingCart);
             }
             // Validate shopping cart population : caseShoppingCart END
@@ -209,19 +219,20 @@ namespace OnlineStore.TestCases
             var caseValidateMath = extent.StartTest("Validate math");
             caseValidateMath.Log(LogStatus.Info, "Field calulation validations");
 
+            var checkoutPage = new CheckoutPage(driver);
+
             driver.Navigate().GoToUrl("http://store.demoqa.com/products-page/checkout/");
             driver.FindElement(By.XPath(".//*[@id='header_cart']/a/span[1]")).Click();
 
-
+            
             // Validate displayed item cart total matches calculated sum of item quantities
-            int displayedItemTotal = Int32.Parse(driver.FindElement(By.XPath(".//*[@id='header_cart']/a/em[1]")).Text);
+            //int displayedItemTotal = Int32.Parse(driver.FindElement(By.XPath(".//*[@id='header_cart']/a/em[1]")).Text);   or driver.FindElement(By.CssSelector(".count")).Text
+
+            int displayedItemTotal = checkoutPage.GetCartItemsTotal();
+
             caseValidateMath.Log(LogStatus.Info, "totalItems is " + displayedItemTotal);
-            int calculatedItemTotal =
-                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[3]/form/input[1]")).GetAttribute("value")) +
-                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[3]/form/input[1]")).GetAttribute("value")) +
-                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[3]/form/input[1]")).GetAttribute("value")) +
-                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[3]/form/input[1]")).GetAttribute("value")) +
-                Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")).GetAttribute("value"));
+            int calculatedItemTotal = checkoutPage.GetCalculatedItemTotal();
+
             caseValidateMath.Log(LogStatus.Info, "calculatedItemTotal is " + calculatedItemTotal);
             // Assert and log item counts: calculated = displayed
             assertText = "ASSERT:<br/>Expected total item quantity in shopping cart (" + displayedItemTotal + ") = calculated item quantity (" + calculatedItemTotal + ")";
@@ -235,14 +246,12 @@ namespace OnlineStore.TestCases
             }
             Assert.AreEqual(displayedItemTotal, calculatedItemTotal);
             // Validate SubTotal matches sum of line item totals
-            decimal displayedSubTotal = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/span/span")).Text), NumberStyles.Currency);
+        
+            decimal displayedSubTotal = checkoutPage.GetDisplayedSubTotal();
+
             caseValidateMath.Log(LogStatus.Info, "subTotal is " + displayedSubTotal);
-            decimal calculatedSubTotal = 
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[2]/td[5]/span/span")).Text), NumberStyles.Currency) +
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[3]/td[5]/span/span")).Text), NumberStyles.Currency) +
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[4]/td[5]/span/span")).Text), NumberStyles.Currency) +
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[5]/td[5]/span/span")).Text), NumberStyles.Currency) +
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[5]/span/span")).Text), NumberStyles.Currency);
+            decimal calculatedSubTotal = checkoutPage.GetCalculatedSubTotal();
+
             caseValidateMath.Log(LogStatus.Info, "calculatedSubTotal is " + calculatedSubTotal);
             // Assert and log subtotals: calculated = displayed
             assertText = "ASSERT:<br/>Expected total item quantity in shopping cart (" + displayedSubTotal + ") = calculated item quantity (" + calculatedSubTotal + ")";
@@ -288,6 +297,7 @@ namespace OnlineStore.TestCases
             string sslogfileEnd = LogFolder + string.Format("{0:yyyyMMddHHmmss}.png", DateTime.Now);
             ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile(sslogfileEnd, ImageFormat.Png);
             testClosure.Log(LogStatus.Skip, "Add item to cart screenshot:" + testSuite.AddScreenCapture(sslogfileEnd));
+            testClosure.Log(LogStatus.Pass, "Test complete" + testSuite.AddScreenCapture(sslogfileEnd));
             // Test closure : testClosure END
 
             testSuite

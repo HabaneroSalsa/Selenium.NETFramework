@@ -11,8 +11,6 @@ namespace OnlineStore.PageObjects
         [CacheLookup]
         private IWebElement MyAccount { get; set; }
 
-
-
         public HomePage(IWebDriver driver)
         {
             this.driver = driver;

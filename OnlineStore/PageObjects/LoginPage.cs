@@ -44,6 +44,10 @@ namespace OnlineStore.PageObjects
         [CacheLookup]
         private IWebElement ProductCategoryMenu { get; set; }
 
+        [FindsBy(How = How.CssSelector, Using = "#menu-item-72>a")]
+        [CacheLookup]
+        private IWebElement AllProductMenu { get; set; }
+
         [FindsBy(How = How.LinkText, Using = "Register")]
         [CacheLookup]
         private IWebElement RegisterLink { get; set; }
@@ -131,8 +135,11 @@ namespace OnlineStore.PageObjects
         [FindsBy(How = How.CssSelector, Using = "#menu-item-55>a")]
         [CacheLookup]
         private IWebElement YourAccountFooter { get; set; }
-        
-        
+
+        [FindsBy(How = How.XPath, Using = ".//*[@id='wp-admin-bar-my-account']/a")]
+        [CacheLookup]
+        private IWebElement AuthGreet { get; set; }
+
 
         public LoginPage(IWebDriver driver)
         {
@@ -147,5 +154,24 @@ namespace OnlineStore.PageObjects
             Password.SendKeys(userData.Password);
             Submit.Submit();
         }
+
+        public void ClickAllProductMenu()
+        {
+            AllProductMenu.Click();
+        }
+
+        public string GetAuthGreetText()
+        {
+            var authGreet = AuthGreet.Text;
+            return authGreet;
+            
+        }
+
+        public bool GetAuthGreetDisplayedStatus()
+        {
+            bool isGreetingDisplayed = AuthGreet.Displayed;
+            return isGreetingDisplayed;
+        }
+
     }
 }

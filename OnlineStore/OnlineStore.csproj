@@ -73,6 +73,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PageObjects\AllProductPage.cs" />
+    <Compile Include="PageObjects\CkeckoutPage.cs" />
     <Compile Include="PageObjects\HomePage.cs" />
     <Compile Include="PageObjects\LoginPage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
