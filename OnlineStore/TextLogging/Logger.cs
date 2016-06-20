@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Configuration;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OnlineStore.TextLogging
 {
@@ -12,7 +8,7 @@ namespace OnlineStore.TextLogging
     {
         static System.Collections.Specialized.NameValueCollection appSettings = ConfigurationManager.AppSettings;
         static string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
-    appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
+           appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
 
         // Logging definition start
         public static void QATextLog(string str)

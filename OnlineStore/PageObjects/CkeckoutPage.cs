@@ -100,5 +100,28 @@ namespace OnlineStore.PageObjects
             return calculatedItemTotal;
         } 
 
+        public decimal CalculateLineTotal(int i)
+        {
+            decimal CalculatedLineValue =
+            decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + i + "]/td[4]/span")).Text), NumberStyles.Currency) *
+            Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + i + "]/td[3]/form/input[1]")).GetAttribute("value"));
+            return CalculatedLineValue;
+        }
+
+        public decimal GetDisplayedLineTotal(int i)
+        {
+            decimal DisplayedLineTotal =
+            decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + i + "]/td[5]/span/span")).Text), NumberStyles.Currency);
+            return DisplayedLineTotal;
+        }
+
+        public string GenerateLineCalcText(int i, decimal calculatedLinePrice)
+        {
+            string CalcText="";
+            CalcText = "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + i +
+                "]/td[4]/span")).Text), NumberStyles.Currency) + ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + i +
+                "]/td[3]/form/input[1]")).GetAttribute("value")) + " is " + calculatedLinePrice;
+            return CalcText;
+        }
     }
 }

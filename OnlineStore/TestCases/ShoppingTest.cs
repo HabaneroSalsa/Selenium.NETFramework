@@ -9,13 +9,12 @@ using System.Configuration;
 using System.Drawing.Imaging;
 using System.Threading;
 using OnlineStore.TextLogging;
-using System.Globalization;
 
 namespace OnlineStore.TestCases
 {
     class ShoppingTest
-    {   
-        
+    {
+        #region Setup
         static System.Collections.Specialized.NameValueCollection appSettings = ConfigurationManager.AppSettings;
         // Static log filename
         string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
@@ -24,10 +23,11 @@ namespace OnlineStore.TestCases
         //string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
         //    appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
         string LogFolder = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"])+"\\";
-
+        #endregion
         [Test]
         public void AddItemsToCart()
         {
+            #region Initialization
             string assertText = " ";
 
             // Text Logging setup
@@ -45,14 +45,15 @@ namespace OnlineStore.TestCases
             var testSuite = extent.StartTest("Shopping Cart Test Suite", "<b>" + string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now) +
                 "Suite Objective:</b><br/>Log into the system with credentials pulled from Excel.<br/>Add 5 items to the shopping cart where the item names and " +
                 "URLs are pulled from Excel.<br/>Validate pageloads, interactions, and math calculations.");
-            string currentURL = "";
-            testSuite.AssignCategory("Functional", "Regression", "Training");
-            testSuite.AssignAuthor("Rick Johnson");
-            testSuite.Log(LogStatus.Info, "Log file location:<br/>" + HTMLLogFile);
+                testSuite.AssignCategory("Functional", "Regression", "Training")
+                         .AssignAuthor("Rick Johnson")
+                         .Log(LogStatus.Info, "Log file location:<br/>" + HTMLLogFile);
             
             IWebDriver driver = new ChromeDriver();// FirefoxDriver();
             driver.Url = driver.Url = ConfigurationManager.AppSettings["URL"];
-
+            string currentURL = "";
+            #endregion
+            #region LoadHomePageTestCase
             // Validate page load : caseLoadHomePage START
             var homePage = new HomePage(driver);
             var caseLoadHomePage = extent.StartTest("Load Home Page");
@@ -71,7 +72,8 @@ namespace OnlineStore.TestCases
             QALog.QATextLog(assertText.Replace("<br />", "").Replace("<b>", "").Replace("</b>", ""));
 
             // Validate page load : caseLoadHomePage END
-
+            #endregion
+            #region SuccesfulAuthentication
             // Authenticate successful : caseSuccessAuth START
             var caseSuccessAuth = extent.StartTest("Authenticate Successfully");
             homePage.ClickMyAccount();
@@ -127,7 +129,9 @@ namespace OnlineStore.TestCases
                 .AppendChild(caseLoadHomePage)
                 .AppendChild(caseSuccessAuth);
             // Authenticate successful : caseSuccessAuth END
-
+            #endregion
+            #region ShoppingCartTestCase
+            // Validate shopping cart population : caseShoppingCart START
             loginPage.ClickAllProductMenu();
             var allProductPage = new AllProductPage(driver);
             // (Test to click specific abstracted element) allProductPage.ClickButtoniPhone5();
@@ -177,8 +181,8 @@ namespace OnlineStore.TestCases
                 testSuite.AppendChild(caseShoppingCart);
             }
             // Validate shopping cart population : caseShoppingCart END
-
-
+            #endregion
+            #region ValidateMath
             // Validate math calculations in shopping cart : caseValidateMath START
             var caseValidateMath = extent.StartTest("Validate math");
             caseValidateMath.Log(LogStatus.Info, "Field calulation validations");
@@ -227,35 +231,37 @@ namespace OnlineStore.TestCases
             int checkoutRowCountIndex;
             for (checkoutRowCountIndex = 2 ; checkoutRowCountIndex <= checkoutRowCount ; checkoutRowCountIndex++)
             {
-            decimal calculatedLinePrice =
-                decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + checkoutRowCountIndex + "]/td[4]/span")).Text), NumberStyles.Currency) *
-                 Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + checkoutRowCountIndex + "]/td[3]/form/input[1]")).GetAttribute("value"));
-            decimal displayedLinePrice = decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + checkoutRowCountIndex + "]/td[5]/span/span")).Text), NumberStyles.Currency);
-            caseValidateMath.Log(LogStatus.Info, "calculatedLinePrice (" + decimal.Parse((driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + checkoutRowCountIndex + "]/td[4]/span")).Text), NumberStyles.Currency) +
-                ") * " + Int32.Parse(driver.FindElement(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[" + checkoutRowCountIndex + "]/td[3]/form/input[1]")).GetAttribute("value")) +
-                " is " + calculatedLinePrice);
-            // Assert Line 
-            assertText = "<b>ASSERT: </b><br />Expected line item total for Line " + (checkoutRowCountIndex-1) + " displayed line price (" + displayedLinePrice + ") = calculated line price (" + calculatedLinePrice + ")";
-            if (displayedLinePrice == calculatedLinePrice)
-            {
-                caseValidateMath.Log(LogStatus.Pass, assertText);
-            }
-            else
-            {
-                caseValidateMath.Log(LogStatus.Fail, assertText);
-            }
-            Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
-            QALog.QATextLog(assertText.Replace("<br />", "").Replace("<b>", "").Replace("</b>", ""));
+                // Get Calculated Line Price Total for current location by multiplying Displayed Line Item Price * Displayed Line Quantity
+                var checkoutLine = new CheckoutPage(driver);
+                decimal calculatedLinePrice = checkoutLine.CalculateLineTotal(checkoutRowCountIndex);
+                // Get Displayed Line Price Total for current location
+                decimal displayedLinePrice = checkoutLine.GetDisplayedLineTotal(checkoutRowCountIndex);
+                // Log calculated values to the report for current location
+                string lineCalcText = checkoutLine.GenerateLineCalcText(checkoutRowCountIndex, calculatedLinePrice);
+                caseValidateMath.Log(LogStatus.Info, lineCalcText);
+                // Generate Assert Line 
+                assertText = "<b>ASSERT: </b><br />Expected line item total for Line " + (checkoutRowCountIndex-1) + " displayed line price (" + displayedLinePrice + 
+                    ") = calculated line price (" + calculatedLinePrice + ")";
+                if (displayedLinePrice == calculatedLinePrice)
+                {
+                    caseValidateMath.Log(LogStatus.Pass, assertText);
+                }
+                else
+                {
+                    caseValidateMath.Log(LogStatus.Fail, assertText);
+                }
+                Assert.AreEqual(displayedLinePrice, calculatedLinePrice);
+                QALog.QATextLog(assertText.Replace("<br />", "").Replace("<b>", "").Replace("</b>", ""));
         }
             // Validate math calculations in shopping cart : caseValidateMath END
-
-
+            #endregion
+            #region CloseTest
             // Test closure : testClosure START
             var testClosure = extent.StartTest("Ending Validation");
             string sslogfileEnd = LogFolder + string.Format("{0:yyyyMMddHHmmss}.png", DateTime.Now);
             ((ITakesScreenshot)driver).GetScreenshot().SaveAsFile(sslogfileEnd, ImageFormat.Png);
-            testClosure.Log(LogStatus.Skip, "Add item to cart screenshot:" + testSuite.AddScreenCapture(sslogfileEnd));
-            testClosure.Log(LogStatus.Pass, "Test complete" + testSuite.AddScreenCapture(sslogfileEnd));
+            testClosure.Log(LogStatus.Info, "Final cart screenshot:" + testSuite.AddScreenCapture(sslogfileEnd));
+            testClosure.Log(LogStatus.Pass, "Test complete");
             // Test closure : testClosure END
 
             testSuite
@@ -265,9 +271,7 @@ namespace OnlineStore.TestCases
             extent.EndTest(testSuite);    
             extent.Flush();
             extent.Close();
+            #endregion
         }
-
-
-    }
-     
+    }    
 }

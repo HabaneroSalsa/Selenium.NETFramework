@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
 using OnlineStore.PageObjects;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Support.PageObjects;
 using System.Configuration;
 
 namespace OnlineStore.TestCases
@@ -23,7 +21,7 @@ namespace OnlineStore.TestCases
             var loginPage = new LoginPage(driver);
             loginPage.LoginToApplication("LoginTest");
 
-            // driver.Close();
+            driver.Close();
         }
 
 
