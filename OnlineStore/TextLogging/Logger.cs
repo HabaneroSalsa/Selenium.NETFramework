@@ -8,18 +8,20 @@ using System.Threading.Tasks;
 
 namespace OnlineStore.TextLogging
 {
-    class Logger
+    public class QALog
     {
         static System.Collections.Specialized.NameValueCollection appSettings = ConfigurationManager.AppSettings;
-        string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
+        static string LogFile = System.IO.Path.Combine(appSettings["LogDirectory"] == null ? Environment.CurrentDirectory : appSettings["LogDirectory"],
     appSettings["LogPrefix"] == null ? "NUnitTest" : appSettings["LogPrefix"] + string.Format("_{0:yyyyMMddHHmmss}.log", DateTime.Now));
+
         // Logging definition start
-        public void LogQAData(string str)
+        public static void QATextLog(string str)
         {
-            LogQAData(str, null);
+            QATextLog(str, null);
+            return;
         }
 
-        public void LogQAData(string str, params object[] para)
+        public static void QATextLog(string str, params object[] para)
         {
             string str2 = string.Format("[{0:yyyy-MM-dd HH:mm:ss.ffff}] ", DateTime.Now) + str;
             Console.WriteLine(str2, para);
@@ -47,7 +49,7 @@ namespace OnlineStore.TextLogging
                     Debug.WriteLine(e);
                 }
             }
-            return;
+        return;
         }
         // Logging definition end
     }

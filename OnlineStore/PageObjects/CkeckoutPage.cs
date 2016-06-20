@@ -45,6 +45,8 @@ namespace OnlineStore.PageObjects
         [FindsBy(How = How.XPath, Using = ".//*[@id='checkout_page_container']/div[1]/table/tbody/tr[6]/td[3]/form/input[1]")]
         private IWebElement Line5Quantity { get; set; }
 
+        //[FindsBy(How = How.XPath, Using = ".//*[@id='checkout_page_container']/div[1]/table/tbody/tr")]
+        private IWebElement CheckoutTableCount { get; set; }
 
         public CheckoutPage(IWebDriver driver)
         {
@@ -70,6 +72,13 @@ namespace OnlineStore.PageObjects
         {
             Line1Total.GetAttribute("text");
         }
+
+        public int CheckoutTableRowCount()
+        {
+            int checkoutRowCount = driver.FindElements(By.XPath(".//*[@id='checkout_page_container']/div[1]/table/tbody/tr")).Count;
+            return checkoutRowCount;
+        }
+       
 
         public decimal GetCalculatedSubTotal()
         {

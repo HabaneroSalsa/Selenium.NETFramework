@@ -160,6 +160,11 @@ namespace OnlineStore.PageObjects
             AllProductMenu.Click();
         }
 
+        public void GoToShoppingCart()
+        {
+            driver.Navigate().GoToUrl("http://store.demoqa.com/products-page/checkout/");        
+        }
+
         public string GetAuthGreetText()
         {
             var authGreet = AuthGreet.Text;
